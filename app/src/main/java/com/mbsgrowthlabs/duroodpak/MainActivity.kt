@@ -1,15 +1,23 @@
 package com.mbsgrowthlabs.duroodpak
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
-import android.widget.*
+import android.view.View
+import android.view.WindowInsets
+import android.widget.Button
+import android.widget.EditText
+import android.widget.TextView
+import android.widget.Toast
 import org.json.JSONObject
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
-class MainActivity : android.app.Activity() {
+class MainActivity : Activity() {
 
     private lateinit var input: EditText
     private lateinit var dateText: TextView
@@ -17,121 +25,266 @@ class MainActivity : android.app.Activity() {
     private lateinit var overallTotal: TextView
 
     private val prefs by lazy {
-        getSharedPreferences("durood_records", Context.MODE_PRIVATE)
+        getSharedPreferences(
+            "durood_records",
+            Context.MODE_PRIVATE
+        )
     }
 
-    private val fmt = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-
-    private val pretty =
-        SimpleDateFormat("dd MMM yyyy, EEE", Locale.US)
-
-    private fun records(): MutableMap<String, Long> {
-        val obj = JSONObject(
-            prefs.getString("data", "{}") ?: "{}"
+    private val fmt =
+        SimpleDateFormat(
+            "yyyy-MM-dd",
+            Locale.US
         )
 
-        val map = mutableMapOf<String, Long>()
+    private val pretty =
+        SimpleDateFormat(
+            "dd MMM yyyy, EEE",
+            Locale.US
+        )
 
-        val keys = obj.keys()
+    override fun onCreate(
+        savedInstanceState: Bundle?
+    ) {
+        super.onCreate(
+            savedInstanceState
+        )
 
-        while (keys.hasNext()) {
-            val k = keys.next()
-            map[k] = obj.optLong(k, 0L)
+        setContentView(
+            R.layout.activity_main
+        )
+
+        /*
+         * Android 15 / SDK 35 edge-to-edge fix.
+         *
+         * The app content receives the system bar
+         * insets so the header does not go underneath
+         * the time, signal and battery area.
+         */
+        val contentView =
+            findViewById<View>(
+                android.R.id.content
+            )
+
+        contentView.setOnApplyWindowInsetsListener {
+                view,
+                insets ->
+
+            val systemBars =
+                insets.getInsets(
+                    WindowInsets.Type.systemBars()
+                )
+
+            view.setPadding(
+                0,
+                systemBars.top,
+                0,
+                systemBars.bottom
+            )
+
+            insets
         }
 
-        return map
-    }
+        contentView.requestApplyInsets()
 
-    private fun save(map: Map<String, Long>) {
-        val obj = JSONObject()
+        input =
+            findViewById(
+                R.id.countInput
+            )
 
-        map.forEach { (k, v) ->
-            obj.put(k, v)
-        }
+        dateText =
+            findViewById(
+                R.id.dateText
+            )
 
-        prefs.edit()
-            .putString("data", obj.toString())
-            .apply()
-    }
+        todayTotal =
+            findViewById(
+                R.id.todayTotal
+            )
 
-    private fun keyToday(): String {
-        return fmt.format(Date())
-    }
+        overallTotal =
+            findViewById(
+                R.id.overallTotal
+            )
 
-    private fun formatNum(n: Long): String {
-        return String.format(Locale.US, "%,d", n)
-    }
+        dateText.text =
+            pretty.format(
+                Date()
+            )
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        /*
+         * Save / Update button
+         */
+        findViewById<Button>(
+            R.id.saveButton
+        ).setOnClickListener {
 
-        setContentView(R.layout.activity_main)
-
-        input = findViewById(R.id.countInput)
-        dateText = findViewById(R.id.dateText)
-        todayTotal = findViewById(R.id.todayTotal)
-        overallTotal = findViewById(R.id.overallTotal)
-
-        dateText.text = pretty.format(Date())
-
-        findViewById<Button>(R.id.saveButton).setOnClickListener {
             saveToday()
         }
 
-        // Month-wise Records now opens a full-screen page
-        findViewById<Button>(R.id.monthsButton).setOnClickListener {
+        /*
+         * Month-wise Records
+         *
+         * Opens the new full-screen page
+         * instead of the old popup.
+         */
+        findViewById<Button>(
+            R.id.monthsButton
+        ).setOnClickListener {
+
             startActivity(
-                Intent(this, MonthRecordsActivity::class.java)
+                Intent(
+                    this,
+                    MonthRecordsActivity::class.java
+                )
             )
         }
 
-        findViewById<Button>(R.id.overallButton).setOnClickListener {
+        /*
+         * Overall Total
+         */
+        findViewById<Button>(
+            R.id.overallButton
+        ).setOnClickListener {
+
             showOverall()
         }
 
         refresh()
     }
 
+    private fun records():
+            MutableMap<String, Long> {
+
+        val obj =
+            JSONObject(
+                prefs.getString(
+                    "data",
+                    "{}"
+                ) ?: "{}"
+            )
+
+        val map =
+            mutableMapOf<String, Long>()
+
+        val keys =
+            obj.keys()
+
+        while (keys.hasNext()) {
+
+            val key =
+                keys.next()
+
+            map[key] =
+                obj.optLong(
+                    key,
+                    0L
+                )
+        }
+
+        return map
+    }
+
+    private fun save(
+        map: Map<String, Long>
+    ) {
+
+        val obj =
+            JSONObject()
+
+        map.forEach {
+                (key, value) ->
+
+            obj.put(
+                key,
+                value
+            )
+        }
+
+        prefs.edit()
+            .putString(
+                "data",
+                obj.toString()
+            )
+            .apply()
+    }
+
+    private fun keyToday(): String {
+
+        return fmt.format(
+            Date()
+        )
+    }
+
+    private fun formatNum(
+        number: Long
+    ): String {
+
+        return String.format(
+            Locale.US,
+            "%,d",
+            number
+        )
+    }
+
     private fun refresh() {
 
-        val m = records()
+        val map =
+            records()
 
-        val today = m[keyToday()] ?: 0L
+        val today =
+            map[keyToday()] ?: 0L
 
-        todayTotal.text = formatNum(today)
+        todayTotal.text =
+            formatNum(
+                today
+            )
 
-        overallTotal.text = formatNum(m.values.sum())
+        overallTotal.text =
+            formatNum(
+                map.values.sum()
+            )
     }
 
     private fun saveToday() {
 
-        val value = input.text
-            .toString()
-            .trim()
-            .toLongOrNull()
+        val value =
+            input.text
+                .toString()
+                .trim()
+                .toLongOrNull()
 
-        if (value == null || value < 0) {
-            input.error = "Enter a valid number"
+        if (
+            value == null ||
+            value < 0
+        ) {
+
+            input.error =
+                "Enter a valid number"
+
             return
         }
 
-        val m = records()
+        val map =
+            records()
 
         /*
-         * Important:
-         * If today's record already exists, the new value
-         * is ADDED to the existing value.
+         * Same-date records are combined.
          *
          * Example:
-         * Today = 2,000
-         * Add another 2,000
-         * Result = 4,000
+         *
+         * First entry = 2,000
+         * Second entry = 2,000
+         * Today's total = 4,000
          */
-        val oldValue = m[keyToday()] ?: 0L
 
-        m[keyToday()] = oldValue + value
+        val oldValue =
+            map[keyToday()] ?: 0L
 
-        save(m)
+        map[keyToday()] =
+            oldValue + value
+
+        save(map)
 
         input.text.clear()
 
@@ -139,64 +292,106 @@ class MainActivity : android.app.Activity() {
 
         Toast.makeText(
             this,
-            "Today's record updated: ${formatNum(oldValue + value)}",
+            "Today's record updated: ${
+                formatNum(
+                    oldValue + value
+                )
+            }",
             Toast.LENGTH_SHORT
         ).show()
     }
 
+    /*
+     * Old popup method is kept only for compatibility.
+     *
+     * The main Month-wise button no longer uses it.
+     */
     private fun showMonths() {
 
-        val m = records()
+        val map =
+            records()
 
-        if (m.isEmpty()) {
-            toast("Abhi koi record nahi hai.")
+        if (map.isEmpty()) {
+
+            toast(
+                "Abhi koi record nahi hai."
+            )
+
             return
         }
 
-        val months = mutableMapOf<String, Long>()
+        val months =
+            mutableMapOf<String, Long>()
 
-        m.forEach { (d, v) ->
+        map.forEach {
+                (date, value) ->
 
-            val month = d.substring(0, 7)
+            val month =
+                date.substring(
+                    0,
+                    7
+                )
 
             months[month] =
-                (months[month] ?: 0L) + v
+                (months[month] ?: 0L) +
+                        value
         }
 
-        val keys = months.keys.sortedDescending()
+        val keys =
+            months.keys
+                .sortedDescending()
 
-        val labels = keys.map {
+        val labels =
+            keys.map {
 
-            monthLabel(it) +
-                    " • " +
-                    formatNum(months[it] ?: 0L)
+                monthLabel(it) +
+                        " • " +
+                        formatNum(
+                            months[it] ?: 0L
+                        )
 
-        }.toTypedArray()
+            }.toTypedArray()
 
         AlertDialog.Builder(this)
-            .setTitle("📅 Month-wise Records")
-            .setItems(labels) { _, which ->
+            .setTitle(
+                "📅 Month-wise Records"
+            )
+            .setItems(
+                labels
+            ) { _, which ->
 
                 showMonth(
                     keys[which],
-                    months[keys[which]] ?: 0L
+                    months[
+                        keys[which]
+                    ] ?: 0L
                 )
             }
-            .setNegativeButton("Close", null)
+            .setNegativeButton(
+                "Close",
+                null
+            )
             .show()
     }
 
-    private fun monthLabel(key: String): String {
+    private fun monthLabel(
+        key: String
+    ): String {
 
-        val d = SimpleDateFormat(
-            "yyyy-MM",
-            Locale.US
-        ).parse(key)!!
+        val date =
+            SimpleDateFormat(
+                "yyyy-MM",
+                Locale.US
+            ).parse(
+                key
+            )!!
 
         return SimpleDateFormat(
             "MMMM yyyy",
             Locale.US
-        ).format(d)
+        ).format(
+            date
+        )
     }
 
     private fun showMonth(
@@ -204,169 +399,259 @@ class MainActivity : android.app.Activity() {
         total: Long
     ) {
 
-        val m = records()
+        val map =
+            records()
 
-        val days = m.keys
-            .filter {
-                it.startsWith(month)
-            }
-            .sortedDescending()
+        val days =
+            map.keys
+                .filter {
+                    it.startsWith(
+                        month
+                    )
+                }
+                .sortedDescending()
 
-        val text = StringBuilder()
+        val text =
+            StringBuilder()
 
         text.append(
-            "${monthLabel(month)}\n" +
-                    "Total: ${formatNum(total)} Durood\n\n"
+            "${monthLabel(month)}\n"
         )
 
-        days.forEach { d ->
+        text.append(
+            "Total: ${
+                formatNum(total)
+            } Durood\n\n"
+        )
 
-            val date = SimpleDateFormat(
-                "yyyy-MM-dd",
-                Locale.US
-            ).parse(d)!!
+        days.forEach { dateKey ->
+
+            val date =
+                SimpleDateFormat(
+                    "yyyy-MM-dd",
+                    Locale.US
+                ).parse(
+                    dateKey
+                )!!
 
             text.append(
                 SimpleDateFormat(
                     "dd MMM yyyy, EEEE",
                     Locale.US
-                ).format(date)
+                ).format(
+                    date
+                )
             )
 
             text.append(
-                " — ${formatNum(m[d] ?: 0L)}\n"
+                " — ${
+                    formatNum(
+                        map[dateKey] ?: 0L
+                    )
+                }\n"
             )
         }
 
-        val builder = AlertDialog.Builder(this)
+        AlertDialog.Builder(this)
             .setTitle(
-                "${monthLabel(month)} • ${formatNum(total)}"
+                "${monthLabel(month)} • ${
+                    formatNum(total)
+                }"
             )
-            .setMessage(text.toString())
+            .setMessage(
+                text.toString()
+            )
+            .setPositiveButton(
+                "Edit Record"
+            ) { _, _ ->
 
-        builder
-            .setPositiveButton("Edit Record") { _, _ ->
-                chooseEdit(days)
+                chooseEdit(
+                    days
+                )
             }
-            .setNegativeButton("Close", null)
+            .setNegativeButton(
+                "Close",
+                null
+            )
             .show()
     }
 
-    private fun chooseEdit(days: List<String>) {
+    private fun chooseEdit(
+        days: List<String>
+    ) {
 
-        if (days.isEmpty()) return
+        if (days.isEmpty()) {
+            return
+        }
 
-        val labels = days.map { d ->
+        val map =
+            records()
 
-            val date = SimpleDateFormat(
-                "yyyy-MM-dd",
-                Locale.US
-            ).parse(d)!!
+        val labels =
+            days.map { dateKey ->
 
-            SimpleDateFormat(
-                "dd MMM yyyy",
-                Locale.US
-            ).format(date) +
-                    " — " +
-                    formatNum(records()[d] ?: 0L)
+                val date =
+                    SimpleDateFormat(
+                        "yyyy-MM-dd",
+                        Locale.US
+                    ).parse(
+                        dateKey
+                    )!!
 
-        }.toTypedArray()
+                SimpleDateFormat(
+                    "dd MMM yyyy",
+                    Locale.US
+                ).format(
+                    date
+                ) +
+                        " — " +
+                        formatNum(
+                            map[dateKey] ?: 0L
+                        )
+
+            }.toTypedArray()
 
         AlertDialog.Builder(this)
-            .setTitle("Choose a date")
-            .setItems(labels) { _, which ->
+            .setTitle(
+                "Choose a date"
+            )
+            .setItems(
+                labels
+            ) { _, which ->
 
-                editRecord(days[which])
+                editRecord(
+                    days[which]
+                )
             }
-            .setNegativeButton("Close", null)
+            .setNegativeButton(
+                "Close",
+                null
+            )
             .show()
     }
 
-    private fun editRecord(date: String) {
+    private fun editRecord(
+        date: String
+    ) {
 
-        val m = records()
+        val map =
+            records()
 
-        val box = EditText(this)
+        val box =
+            EditText(this)
 
         box.inputType = 2
 
         box.setText(
-            (m[date] ?: 0L).toString()
+            (
+                map[date] ?: 0L
+            ).toString()
         )
 
-        box.setSelectAllOnFocus(true)
+        box.setSelectAllOnFocus(
+            true
+        )
 
-        box.hint = "Durood count"
+        box.hint =
+            "Durood count"
 
-        val day = SimpleDateFormat(
-            "yyyy-MM-dd",
-            Locale.US
-        ).parse(date)!!
+        val day =
+            SimpleDateFormat(
+                "yyyy-MM-dd",
+                Locale.US
+            ).parse(
+                date
+            )!!
 
         AlertDialog.Builder(this)
             .setTitle(
-                "Edit • " +
-                        SimpleDateFormat(
-                            "dd MMMM yyyy",
-                            Locale.US
-                        ).format(day)
+                "Edit • ${
+                    SimpleDateFormat(
+                        "dd MMMM yyyy",
+                        Locale.US
+                    ).format(day)
+                }"
             )
-            .setView(box)
+            .setView(
+                box
+            )
+            .setPositiveButton(
+                "UPDATE"
+            ) { _, _ ->
 
-            .setPositiveButton("UPDATE") { _, _ ->
+                val newValue =
+                    box.text
+                        .toString()
+                        .toLongOrNull()
 
-                val v = box.text
-                    .toString()
-                    .toLongOrNull()
+                if (
+                    newValue != null &&
+                    newValue >= 0
+                ) {
 
-                if (v != null && v >= 0) {
+                    map[date] =
+                        newValue
 
-                    m[date] = v
-
-                    save(m)
+                    save(map)
 
                     refresh()
 
-                    toast("Record updated")
+                    toast(
+                        "Record updated"
+                    )
                 }
             }
+            .setNeutralButton(
+                "DELETE"
+            ) { _, _ ->
 
-            .setNeutralButton("DELETE") { _, _ ->
+                map.remove(
+                    date
+                )
 
-                m.remove(date)
-
-                save(m)
+                save(map)
 
                 refresh()
 
-                toast("Record deleted")
+                toast(
+                    "Record deleted"
+                )
             }
-
-            .setNegativeButton("Cancel", null)
-
+            .setNegativeButton(
+                "Cancel",
+                null
+            )
             .show()
     }
 
     private fun showOverall() {
 
-        val total = records()
-            .values
-            .sum()
+        val total =
+            records()
+                .values
+                .sum()
 
         AlertDialog.Builder(this)
-            .setTitle("✨ All-Time Durood e Pak Total")
-            .setMessage(
-                formatNum(total) + " Durood"
+            .setTitle(
+                "✨ All-Time Durood e Pak Total"
             )
-            .setPositiveButton("Close", null)
+            .setMessage(
+                "${formatNum(total)} Durood"
+            )
+            .setPositiveButton(
+                "Close",
+                null
+            )
             .show()
     }
 
-    private fun toast(s: String) {
+    private fun toast(
+        message: String
+    ) {
 
         Toast.makeText(
             this,
-            s,
+            message,
             Toast.LENGTH_SHORT
         ).show()
     }
