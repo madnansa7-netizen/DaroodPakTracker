@@ -1,0 +1,22 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="#F7F0E1">
+ <LinearLayout android:layout_width="match_parent" android:layout_height="92dp" android:background="@drawable/top_bg" android:gravity="center_vertical" android:paddingHorizontal="20dp" android:orientation="vertical">
+  <TextView android:id="@+id/title" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="☪  Durood e Pak Tracker" android:textColor="#FFF8E6" android:textSize="24sp" android:textStyle="bold"/>
+  <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Rozana record • Monthly total • Overall total" android:textColor="#EAD9A6" android:textSize="12sp"/>
+ </LinearLayout>
+ <ScrollView android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:fillViewport="true">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="18dp">
+   <TextView android:id="@+id/dateText" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/card_bg" android:gravity="center" android:padding="18dp" android:textColor="#16352B" android:textSize="20sp" android:textStyle="bold"/>
+   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:gravity="center" android:text="Aaj kitni dafa Durood e Pak parha?" android:textColor="#16352B" android:textSize="16sp"/>
+   <EditText android:id="@+id/countInput" android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="10dp" android:background="@drawable/input_bg" android:hint="Misal: 5000" android:inputType="number" android:paddingHorizontal="18dp" android:textSize="18sp"/>
+   <Button android:id="@+id/saveButton" android:layout_width="match_parent" android:layout_height="54dp" android:layout_marginTop="12dp" android:background="@drawable/button_bg" android:text="SAVE / UPDATE" android:textColor="#FFF8E6" android:textStyle="bold"/>
+   <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:orientation="horizontal">
+    <LinearLayout android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:background="@drawable/card_bg" android:gravity="center" android:orientation="vertical" android:padding="10dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Today's Total" android:textColor="#567"/><TextView android:id="@+id/todayTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="0" android:textColor="#0B6B4F" android:textSize="28sp" android:textStyle="bold"/></LinearLayout>
+    <Space android:layout_width="10dp" android:layout_height="1dp"/>
+    <LinearLayout android:layout_width="0dp" android:layout_height="110dp" android:layout_weight="1" android:background="@drawable/card_bg" android:gravity="center" android:orientation="vertical" android:padding="10dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Overall Total" android:textColor="#567"/><TextView android:id="@+id/overallTotal" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:text="0" android:textColor="#0B6B4F" android:textSize="28sp" android:textStyle="bold"/></LinearLayout>
+   </LinearLayout>
+   <Button android:id="@+id/monthsButton" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="18dp" android:background="@drawable/button_bg" android:text="📅  MONTH-WISE RECORDS" android:textColor="#FFF8E6"/>
+   <Button android:id="@+id/overallButton" android:layout_width="match_parent" android:layout_height="52dp" android:layout_marginTop="8dp" android:background="@drawable/button_bg" android:text="✦  OVERALL TOTAL" android:textColor="#FFF8E6"/>
+   <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="22dp" android:gravity="center" android:text="Aap ka record sirf isi phone par save hota hai.\nAllah Ta'ala aap ka Durood qabool farmaye. Aameen." android:textColor="#6A705E" android:textSize="13sp"/>
+  </LinearLayout>
+ </ScrollView>
+</LinearLayout>
